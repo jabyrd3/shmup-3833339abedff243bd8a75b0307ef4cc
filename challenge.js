@@ -19,25 +19,26 @@ window.initGame = function () {
         //
 
         // replace this with a correct object
-    let parsed = {
-      bounds: [20, 20],
-      robos: [{
-        x: 2,
-        y: 1,
-        o: 'W',
-        command: 'rlrlrff'
-      }, {
-        x: 12,
-        y: 10,
-        o: 'E',
-        command: 'fffffffffff'
-      }, {
-        x: 18,
-        y: 8,
-        o: 'N',
-        command: 'frlrlrlr'
-      }]
+    let lines = input.split('\n');
+    let bounds = lines.shift();
+
+    var parsed = {
+      bounds: bounds.trim().split(' ').map(Number),
+      robos: []
     };
+
+    while (lines.length) {
+      let t = lines.shift();
+      let loc = t.trim().split(' ');
+      let cmds = lines.shift();
+
+      parsed.robos.push({
+        o: loc.pop().toUpperCase(),
+        y: Number(loc.pop()),
+        x: Number(loc.pop()),
+        command: cmds.trim()
+      });
+    }
 
     return parsed;
   };
