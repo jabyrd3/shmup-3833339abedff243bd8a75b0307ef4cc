@@ -1,10 +1,14 @@
 'use strict';
-/* globals _, engine */
+/* globals _, engine document window*/
 window.initGame = function () {
   console.log('initgame');
     // you're really better off leaving this line alone, i promise.
   const command =
         '5 3 \n 1 1 s\n ffffff\n 2 1 w \n flfffffrrfffffff\n 0 3 w\n LLFFFLFLFL';
+
+  var bounds,
+    scents = {},
+    deadDudes = [];
 
     // this function parses the input string so that we have useful names/parameters
     // to define the playfield and robots for subsequent steps
@@ -19,33 +23,81 @@ window.initGame = function () {
         //
 
         // replace this with a correct object
-    let parsed = {
-      bounds: [20, 20],
-      robos: [{
-        x: 2,
-        y: 1,
-        o: 'W',
-        command: 'rlrlrff'
-      }, {
-        x: 12,
-        y: 10,
-        o: 'E',
-        command: 'fffffffffff'
-      }, {
-        x: 18,
-        y: 8,
-        o: 'N',
-        command: 'frlrlrlr'
-      }]
+    let lines = input.split('\n');
+    let tempBounds = lines.shift();
+
+    bounds = tempBounds.trim().split(' ').map(Number);
+
+    var parsed = {
+      bounds: bounds,
+      robos: []
     };
 
+    while (lines.length) {
+      let t = lines.shift();
+      let loc = t.trim().split(' ');
+      let cmds = lines.shift();
+
+      parsed.robos.push({
+        o: loc.pop().toUpperCase(),
+        y: Number(loc.pop()),
+        x: Number(loc.pop()),
+        command: cmds.trim()
+      });
+    }
+
     return parsed;
+  };
+
+  const getMovement = (orientation) => {
+    return {
+      'N': [0, -1],
+      'S': [0, 1],
+      'E': [1, 0],
+      'W': [-1, 0]
+    }[orientation];
+  };
+
+  const updateOrientation = (orientation, cmd) => {
+    const o = {
+      'N': ['W', 'E'],
+      'S': ['E', 'W'],
+      'E': ['N', 'S'],
+      'W': ['S', 'N']
+    }[orientation];
+
+    return cmd === 'l' ? o[0] : o[1];
+  };
+
+  const advanceRobo = (x, y, o) => {
+    let movement = getMovement(o);
+
+    return [x, y].map((num, index) => {
+      return num + movement[index];
+    });
+  };
+
+  const addScent = (x, y) => {
+    if (scents[x] === undefined) scents[x] = [];
+
+    scents[x].push(y);
+  };
+
+  const hasScent = (x, y) => {
+    if (scents[x] === undefined) return false;
+
+    return scents[x].includes(y);
+  };
+
+  const deadRobo = (x, y)  => {
+    let [bx, by] = bounds;
+
+    return x > bx || x < 0 || y > by || y < 0;
   };
 
     // this function replaces the robos after they complete one instruction
     // from their commandset
   const tickRobos = (robos) => {
-    console.log('tickrobos');
         // 
         // task #2
         //
@@ -69,11 +121,71 @@ window.initGame = function () {
 
         // write robot logic here
 
+    robos.map((r) => {
+      if (!r.command.length) {
+        return r;
+      }
+
+      // current command
+      let cmd = r.command[0].toLowerCase();
+
+      // remove the first command
+      r.command = r.command.substring(1);
+
+      // just change orientation
+      if (cmd !== 'f') {
+        r.o = updateOrientation(r.o, cmd);
+        return r;
+      }
+
+      let newLocation = advanceRobo(r.x, r.y, r.o);
+
+      // check for a scent
+      // TODO - just bc it has a scent doesnt mean they cant move _across_ it
+
+      // check if we need to mark some scents
+      if (deadRobo(newLocation[0], newLocation[1])) {
+
+        if (hasScent(r.x, r.y)) {
+          return r;
+        }
+
+        r.dead = true;
+        deadDudes.push(r);
+
+        addScent(r.x, r.y);
+
+        return r;
+      }
+
+      r.x = newLocation[0];
+      r.y = newLocation[1];
+
+      return r;
+    });
+
+    return robos.filter((r) => {
+      return !r.dead;
+    });
         // return the mutated robos object from the input to match the new state
         // return ???;
   };
     // mission summary function
   const missionSummary = (robos) => {
+    let ulRobots = document.getElementById('robots');
+    let ulLost = document.getElementById('lostRobots');
+
+    robos.forEach((r) => {
+      let li = document.createElement('li');
+      li.appendChild(document.createTextNode(`Position: ${r.x},${r.y} | Orientation: ${r.o}`));
+      ulRobots.appendChild(li);
+    });
+
+    deadDudes.forEach((r) => {
+      let li = document.createElement('li');
+      li.appendChild(document.createTextNode(`I died going ${r.o} from coordinates: ${r.x},${r.y}`));
+      ulLost.appendChild(li);
+    });
         //
         // task #3
         //
