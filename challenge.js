@@ -121,11 +121,11 @@ window.initGame = function () {
         // write robot logic here
 
     robos.map((r) => {
-      // current command
       if (!r.command.length) {
         return r;
       }
 
+      // current command
       let cmd = r.command[0].toLowerCase();
 
       // remove the first command
@@ -137,17 +137,18 @@ window.initGame = function () {
         return r;
       }
 
-      // advance or die
       let newLocation = advanceRobo(r.x, r.y, r.o);
 
       // check for a scent
-      if (hasScent(newLocation.x, newLocation.y)) {
-        // don't advance it i guess?
-        return r;
-      }
+      // TODO - just bc it has a scent doesnt mean they cant move _across_ it
 
       // check if we need to mark some scents
-      if (deadRobo(newLocation.x, newLocation.y)) {
+      if (deadRobo(newLocation[0], newLocation[1])) {
+
+        if (hasScent(r.x, r.y)) {
+          return r;
+        }
+
         r.dead = true;
 
         addScent(r.x, r.y);
