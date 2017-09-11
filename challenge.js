@@ -1,5 +1,5 @@
 'use strict';
-/* globals _, engine */
+/* globals _, engine document window*/
 window.initGame = function () {
   console.log('initgame');
     // you're really better off leaving this line alone, i promise.
@@ -7,7 +7,8 @@ window.initGame = function () {
         '5 3 \n 1 1 s\n ffffff\n 2 1 w \n flfffffrrfffffff\n 0 3 w\n LLFFFLFLFL';
 
   var bounds,
-      scents = {};
+    scents = {},
+    deadDudes = [];
 
     // this function parses the input string so that we have useful names/parameters
     // to define the playfield and robots for subsequent steps
@@ -150,6 +151,7 @@ window.initGame = function () {
         }
 
         r.dead = true;
+        deadDudes.push(r);
 
         addScent(r.x, r.y);
 
@@ -170,6 +172,20 @@ window.initGame = function () {
   };
     // mission summary function
   const missionSummary = (robos) => {
+    let ulRobots = document.getElementById('robots');
+    let ulLost = document.getElementById('lostRobots');
+
+    robos.forEach((r) => {
+      let li = document.createElement('li');
+      li.appendChild(document.createTextNode(`Position: ${r.x},${r.y} | Orientation: ${r.o}`));
+      ulRobots.appendChild(li);
+    });
+
+    deadDudes.forEach((r) => {
+      let li = document.createElement('li');
+      li.appendChild(document.createTextNode(`I died going ${r.o} from coordinates: ${r.x},${r.y}`));
+      ulLost.appendChild(li);
+    });
         //
         // task #3
         //
