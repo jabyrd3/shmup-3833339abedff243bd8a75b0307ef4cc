@@ -6,6 +6,8 @@ window.initGame = function () {
   const command =
         '5 3 \n 1 1 s\n ffffff\n 2 1 w \n flfffffrrfffffff\n 0 3 w\n LLFFFLFLFL';
 
+  var bounds;
+
     // this function parses the input string so that we have useful names/parameters
     // to define the playfield and robots for subsequent steps
   const parseInput = (input) => {
@@ -20,10 +22,12 @@ window.initGame = function () {
 
         // replace this with a correct object
     let lines = input.split('\n');
-    let bounds = lines.shift();
+    let tempBounds = lines.shift();
+
+    bounds = tempBounds.trim().split(' ').map(Number);
 
     var parsed = {
-      bounds: bounds.trim().split(' ').map(Number),
+      bounds: tempBounds,
       robos: []
     };
 
@@ -43,10 +47,32 @@ window.initGame = function () {
     return parsed;
   };
 
+  const getMovement = (orientation) => {
+    return {
+      'N': [0, 1],
+      'S': [0, -1],
+      'E': [1, 0],
+      'W': [-1, 0]
+    }[orientation];
+  };
+
+  const advanceRobo = (x, y, o) => {
+    /**
+     * if O is N, advance Y by 1
+     * if O is S, advance Y by -1
+     * if O is E, advance X by 1
+     * if O is W, advance X by -1
+     */
+    let movement = getMovement(o);
+
+    return [x, y].map((num, index) => {
+      return num + movement[index];
+    });
+  };
+
     // this function replaces the robos after they complete one instruction
     // from their commandset
   const tickRobos = (robos) => {
-    console.log('tickrobos');
         // 
         // task #2
         //
@@ -69,7 +95,29 @@ window.initGame = function () {
         // cause it to leave the playfield.
 
         // write robot logic here
+    let scents = [];
 
+    robos.map((r) => {
+      // current command
+      let cmd = r.command[0].toLowerCase();
+
+      // remove the first command
+      r.command = r.command.substring(1);
+
+      // just change orientation
+      if (cmd !== 'f') {
+        r.o = cmd;
+        return r;
+      }
+      
+      // advance or die
+      let newLocation = advanceRobo(r.x, r.y, r.o);
+
+      r.x = newLocation[0];
+      r.y = newLocation[1];
+
+      return r;
+    });
         // return the mutated robos object from the input to match the new state
         // return ???;
   };
